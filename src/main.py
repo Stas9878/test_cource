@@ -4,6 +4,7 @@ from database import Base
 from db_helper import db_helper
 from items.router import router as items_router
 from users.router import router as users_router
+from products.router import router as products_router
 
 app = FastAPI()
 
@@ -16,4 +17,5 @@ async def lifespan(app: FastAPI):
 
 app.include_router(items_router)
 app.include_router(users_router)
+app.include_router(products_router)
 
