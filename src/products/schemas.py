@@ -5,7 +5,7 @@ class ProductBase(BaseModel):
     description: str
     price: int
 
-class ProductCreate(BaseModel):
+class ProductCreate(ProductBase):
     pass
 
 class Product(ProductBase):
