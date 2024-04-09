@@ -10,6 +10,8 @@ python = "3.11.1"
 fastapi = "^0.110.1"
 uvicorn = {extras = ["standard"], version = "^0.29.0"}
 pydantic = {extras = ["email"], version = "^2.6.4"}
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.29"}
+asyncpg = "^0.29.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^8.1.1"
