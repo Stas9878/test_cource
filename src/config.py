@@ -14,7 +14,7 @@ DB_PASSWORD = os.environ.get('DB_PASSWORD')
 
 class Settings(BaseSettings):
     db_url: str = f'postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
-    db_echo: bool = True
+    db_echo: bool = False
     
 
 settings = Settings()
