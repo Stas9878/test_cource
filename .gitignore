@@ -1,5 +1,6 @@
 .DS_Store
 /test_cource_venv
+create_user.py
 
 # Django #
 *.log
