@@ -16,10 +16,6 @@ class Order(Base):
         server_default=func.now(),
         default=datetime.now
     )
-    # products: Mapped[list['Product']] = relationship(
-    #     secondary='order_product_many',
-    #     back_populates='orders',
-    # )
     
     products_details: Mapped[list['OrderProductMany']] = relationship(
         back_populates='order',
