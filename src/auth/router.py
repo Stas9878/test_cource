@@ -92,16 +92,17 @@ def generate_session_id() -> str:
 
 
 @router.post('/login-cookie/')
-def demo_auth_login_cookie(response: Response, auth_username: str = Depends(get_auth_user_username)):
+def demo_auth_login_cookie(response: Response, #auth_username: str = Depends(get_auth_user_username),
+                           username: str = Depends(get_username_by_static_auth_token)):
     session_id = generate_session_id()
     COOKIES[session_id] = {
-        'username': auth_username,
+        'username': username,
         'login_at': int(time.time())
     }
     response.set_cookie(COOKIE_SESSION_ID_KEY, session_id)
     return {
         'result': 'ok',
-        'user': auth_username
+        'user': username
     }
 
 
@@ -120,4 +121,16 @@ def demo_auth_check_cookie(user_session_data: dict = Depends(get_session_data)):
     return {
         'message': f'Hi, {username}',
         **user_session_data
+    }
+
+
+@router.get('/logout-cookie/')
+def dem_auth_logout(response: Response,
+                    session_id: str = Cookie(alias=COOKIE_SESSION_ID_KEY),
+                    user_session_data: dict = Depends(get_session_data)):
+    COOKIES.pop(session_id)
+    response.delete_cookie(COOKIE_SESSION_ID_KEY)
+    username = user_session_data['username']
+    return {
+        'message': f'Bye, {username}'
     }
