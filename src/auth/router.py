@@ -8,12 +8,15 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Annotated
 import secrets
 
+
 router = APIRouter(
     prefix='/demo-auth', 
     tags=['Demo auth']
 )
 
+
 security = HTTPBasic()
+
 
 @router.get('/basic-auth/')
 def demo_basic_auth(credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
@@ -57,6 +60,7 @@ def get_auth_user_username(credentials: Annotated[HTTPBasicCredentials, Depends(
 
     return credentials.username
 
+
 def get_username_by_static_auth_token(static_token: str = Header(alias='xxx-auth-token')) -> str:
     if static_token not in static_auth_token:
         raise HTTPException(
@@ -72,7 +76,6 @@ def demo_auth_username(auth_username: str = Depends(get_auth_user_username)):
         'message': f'Hi, {auth_username}',
         'username': auth_username,
     }
-
 
 
 @router.get('/some-http-header-auth/')
@@ -114,6 +117,7 @@ def get_session_data(session_id: str = Cookie(alias=COOKIE_SESSION_ID_KEY)):
             detail='not auth'
         )
     return COOKIES[session_id]
+
 
 @router.get('/check-cookie/')
 def demo_auth_check_cookie(user_session_data: dict = Depends(get_session_data)):

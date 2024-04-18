@@ -1,6 +1,7 @@
 .DS_Store
 /test_cource_venv
 create_user.py
+/certificates
 
 # Django #
 *.log
