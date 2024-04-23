@@ -165,10 +165,12 @@ def validate_auth_user():
 @router.post('/login/')
 def auth_user_issue_jwt(user: UserSchema = Depends(validate_auth_user)) -> TokenInfo:
     jwt_payload = {
+        'sub': user.username,
         'username': user.username,
         'email': user.email
     }
-    token = encode_jwt()
+
+    token = encode_jwt(jwt_payload)
     return TokenInfo(
         access_token=token,
         token_type='Bearer'
