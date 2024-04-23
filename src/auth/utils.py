@@ -1,15 +1,23 @@
+from fastapi import (HTTPException, status, 
+                     Form, Depends)
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from auth.schemas import UserSchema
 from datetime import datetime, timedelta
 import jwt
 import bcrypt
 from config import settings
 
 
+http_bearer = HTTPBearer()
+
+
 def encode_jwt(payload: dict, 
                private_key: str = settings.auth_jwt.private_key_path.read_text(), 
                algorithm: str = settings.auth_jwt.algorithm,
-               expire_timedelta: timedelta | None = None ,
+               expire_timedelta: timedelta | None = None,
                expire_minutes: int = settings.auth_jwt.access_token_expire_minutes):
-    to_encode = payload().copy()
+    
+    to_encode = payload.copy()
     
     now = datetime.now()
     if expire_timedelta:
@@ -18,11 +26,11 @@ def encode_jwt(payload: dict,
         expire = now + timedelta(minutes=expire_minutes)
 
     to_encode.update(
-        exc=expire,
-        iat=now,
+        exp=str(expire),
+        iat=str(now),
     )
     encoded = jwt.encode(
-        payload,
+        to_encode,
         private_key,
         algorithm=algorithm
     )
@@ -50,3 +58,68 @@ def hash_password(password: str) -> bytes:
 def validate_password(password: str, hash_password: bytes) -> bool:
     return bcrypt.checkpw(password.encode(), hash_password)
 
+
+john = UserSchema(
+    username='john',
+    password=hash_password('secret'),
+    email='john@example.com'
+)
+
+sam = UserSchema(
+    username='sam',
+    password=hash_password('secret')
+)
+
+users_db: dict[str, UserSchema] = {
+    john.username: john,
+    sam.username: sam
+}
+
+
+def validate_auth_user(username: str = Form(),
+                       password: str = Form()) -> UserSchema:
+    unauthed_exc = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail='invalid username or password'
+    )
+
+    if not (user := users_db.get(username)):
+        raise unauthed_exc
+    
+    if not validate_password(password=password,hash_password=user.password):
+        raise unauthed_exc
+    
+    if not user.active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='user inactive'
+
+        )
+    return user
+
+
+def get_current_token_payload_user(credentials: HTTPAuthorizationCredentials = Depends(http_bearer)) -> UserSchema:
+    token = credentials.credentials
+    payload = decode_jwt(
+        token=token
+    )
+    return payload
+
+
+def get_current_auth_user(payload: dict = Depends(get_current_token_payload_user)) -> UserSchema:
+    username: str | None = payload.get('sub')
+    if user := users_db.get(username):
+        return user
+    raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='token invalid'
+        )
+    
+
+def get_current_active_auth_user(user: UserSchema = Depends(get_current_token_payload_user)):
+    if user.active:
+        return user
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail='user inactive'
+    )
