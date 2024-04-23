@@ -6,8 +6,8 @@ from fastapi import (APIRouter, Depends,
                      Cookie, Form)
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Annotated
-from src.auth.schemas import UserSchema, TokenInfo
-from src.auth.utils import hash_password, encode_jwt
+from auth.schemas import UserSchema, TokenInfo
+from auth.utils import hash_password, encode_jwt, validate_password
 import secrets
 
 
@@ -161,7 +161,24 @@ users_db: dict[str, UserSchema] = {
 
 def validate_auth_user(username: str = Form(),
                        password: str = Form()):
-    pass
+    unauthed_exc = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail='invalid username or password'
+    )
+
+    if not (user := users_db.get(username)):
+        raise unauthed_exc
+    
+    if not validate_password(password=password,hash_password=user.password):
+        raise unauthed_exc
+    
+    if not user.active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='user inactive'
+
+        )
+    return user
 
 @router.post('/login/')
 def auth_user_issue_jwt(user: UserSchema = Depends(validate_auth_user)) -> TokenInfo:
