@@ -6,6 +6,8 @@ from fastapi import (APIRouter, Depends,
                      Cookie)
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Annotated
+from src.auth.schemas import UserSchema, TokenInfo
+from src.auth.utils import hash_password, encode_jwt
 import secrets
 
 
@@ -140,3 +142,34 @@ def dem_auth_logout(response: Response,
     }
 
 #JWT
+john = UserSchema(
+    username='john',
+    password=hash_password('secret'),
+    email='john@example.com'
+)
+
+sam = UserSchema(
+    username='sam',
+    password=hash_password('secret')
+)
+
+users_db: dict[str, UserSchema] = {
+    john.username: john,
+    sam.username: sam
+}
+
+
+def validate_auth_user():
+    pass
+
+@router.post('/login/')
+def auth_user_issue_jwt(user: UserSchema = Depends(validate_auth_user)) -> TokenInfo:
+    jwt_payload = {
+        'username': user.username,
+        'email': user.email
+    }
+    token = encode_jwt()
+    return TokenInfo(
+        access_token=token,
+        token_type='Bearer'
+    )
