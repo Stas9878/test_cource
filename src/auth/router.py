@@ -138,3 +138,5 @@ def dem_auth_logout(response: Response,
     return {
         'message': f'Bye, {username}'
     }
+
+#JWT
