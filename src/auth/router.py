@@ -3,7 +3,7 @@ import uuid
 from fastapi import (APIRouter, Depends, 
                      HTTPException, status, 
                      Header, Response,
-                     Cookie)
+                     Cookie, Form)
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Annotated
 from src.auth.schemas import UserSchema, TokenInfo
@@ -159,7 +159,8 @@ users_db: dict[str, UserSchema] = {
 }
 
 
-def validate_auth_user():
+def validate_auth_user(username: str = Form(),
+                       password: str = Form()):
     pass
 
 @router.post('/login/')
@@ -167,7 +168,9 @@ def auth_user_issue_jwt(user: UserSchema = Depends(validate_auth_user)) -> Token
     jwt_payload = {
         'sub': user.username,
         'username': user.username,
-        'email': user.email
+        'email': user.email,
+        # 'exp':
+        # 'iat':
     }
 
     token = encode_jwt(jwt_payload)
