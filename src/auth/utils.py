@@ -3,6 +3,7 @@ from fastapi import (HTTPException, status,
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from auth.schemas import UserSchema
 from datetime import datetime, timedelta
+from jwt.exceptions import InvalidTokenError
 import jwt
 import bcrypt
 from config import settings
@@ -26,8 +27,8 @@ def encode_jwt(payload: dict,
         expire = now + timedelta(minutes=expire_minutes)
 
     to_encode.update(
-        exp=str(expire),
-        iat=str(now),
+        exp=expire.timestamp(),
+        iat=now.timestamp(),
     )
     encoded = jwt.encode(
         to_encode,
@@ -98,15 +99,21 @@ def validate_auth_user(username: str = Form(),
     return user
 
 
-def get_current_token_payload_user(credentials: HTTPAuthorizationCredentials = Depends(http_bearer)) -> UserSchema:
+def get_current_token_payload(credentials: HTTPAuthorizationCredentials = Depends(http_bearer)) -> UserSchema:
     token = credentials.credentials
-    payload = decode_jwt(
-        token=token
-    )
-    return payload
+    try:
+        payload = decode_jwt(
+            token=token
+        )
+        return payload
+    except InvalidTokenError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f'invalid token error: {e}'
+        )
 
 
-def get_current_auth_user(payload: dict = Depends(get_current_token_payload_user)) -> UserSchema:
+def get_current_auth_user(payload: dict = Depends(get_current_token_payload)) -> UserSchema:
     username: str | None = payload.get('sub')
     if user := users_db.get(username):
         return user
@@ -116,7 +123,7 @@ def get_current_auth_user(payload: dict = Depends(get_current_token_payload_user
         )
     
 
-def get_current_active_auth_user(user: UserSchema = Depends(get_current_token_payload_user)):
+def get_current_active_auth_user(user: UserSchema = Depends(get_current_auth_user)) -> UserSchema:
     if user.active:
         return user
     raise HTTPException(

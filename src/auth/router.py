@@ -7,7 +7,8 @@ from fastapi import (APIRouter, Depends,
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from typing import Annotated
 from auth.schemas import UserSchema, TokenInfo
-from auth.utils import hash_password, encode_jwt, validate_password, validate_auth_user, get_current_active_auth_user
+from auth.utils import (encode_jwt, validate_auth_user, 
+                        get_current_active_auth_user, get_current_token_payload)
 import secrets
 
 
@@ -159,8 +160,11 @@ def auth_user_issue_jwt(user: UserSchema = Depends(validate_auth_user)) -> Token
 
 
 @router.get('/users/me/')
-def auth_user_check_self_info(user: UserSchema = Depends(get_current_active_auth_user)):
+def auth_user_check_self_info(payload: dict = Depends(get_current_token_payload),
+                              user: UserSchema = Depends(get_current_active_auth_user)):
+    iat = payload.get('iat')
     return {
         'username': user.username,
-        'email': user.email
+        'email': user.email,
+        'logged_in_at': iat    
     }
