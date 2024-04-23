@@ -28,6 +28,7 @@ class AuthJWT(BaseModel):
     algorithm: str = 'RS256'
     access_token_expire_minutes: int = 15
 
+
 class Settings(BaseSettings):
     db: DBSettings = DBSettings()
     auth_jwt: AuthJWT = AuthJWT()

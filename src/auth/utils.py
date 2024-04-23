@@ -1,6 +1,6 @@
 from fastapi import (HTTPException, status, 
                      Form, Depends)
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordBearer
 from auth.schemas import UserSchema
 from datetime import datetime, timedelta
 from jwt.exceptions import InvalidTokenError
@@ -9,7 +9,9 @@ import bcrypt
 from config import settings
 
 
-http_bearer = HTTPBearer()
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl='/demo-auth/login_jwt/'
+)
 
 
 def encode_jwt(payload: dict, 
@@ -99,8 +101,7 @@ def validate_auth_user(username: str = Form(),
     return user
 
 
-def get_current_token_payload(credentials: HTTPAuthorizationCredentials = Depends(http_bearer)) -> UserSchema:
-    token = credentials.credentials
+def get_current_token_payload(token: str = Depends(oauth2_scheme)) -> UserSchema:
     try:
         payload = decode_jwt(
             token=token
@@ -109,7 +110,7 @@ def get_current_token_payload(credentials: HTTPAuthorizationCredentials = Depend
     except InvalidTokenError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f'invalid token error: {e}'
+            detail=f'invalid token error'
         )
 
 
